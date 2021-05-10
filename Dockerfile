@@ -1,4 +1,18 @@
 FROM nvidia/cuda:10.2-devel-ubuntu16.04
+ENV NVIDIA_VISIBLE_DEVICES all
+ENV NVIDIA_DRIVER_CAPABILITIES compute,video,utility
+WORKDIR /ffmpeg_sources
+RUN apt-get -y update && \
+    apt-get install -y git pkgconf && \
+    git clone https://git.videolan.org/git/ffmpeg/nv-codec-headers.git -b sdk/9.1 && \
+    cd nv-codec-headers && \
+    make install 
+RUN apt-get install -y build-essential yasm cmake libtool libc6 libc6-dev unzip wget libnuma1 libnuma-dev && \
+    git clone https://git.ffmpeg.org/ffmpeg.git ffmpeg/ && \
+    cd ffmpeg && \
+    ./configure --enable-cuda-nvcc --enable-cuvid --enable-nvenc --enable-nonfree --enable-libnpp --extra-cflags=-I/usr/local/cuda/include --extra-ldflags=-L/usr/local/cuda/lib64 && \
+    make install
+
 RUN apt-get -y update && \
     apt-get install -y curl && \
     curl -fsSL https://deb.nodesource.com/setup_14.x | bash - && \
