@@ -44,7 +44,6 @@ RUN npm install --loglevel=info
 # 最終イメージのサイズ削減のため、すべてコピーした後でclientフォルダーを削除。clientフォルダー以外
 # をコピーする方法は，ファイルが追加された場合に変更する必要があるため採用しない。
 COPY . .
-RUN rm -rf client
 RUN npm run build-server --loglevel=info
 
 EXPOSE 8888
