@@ -30,7 +30,7 @@ RUN apt-get install -y build-essential python
 WORKDIR /app
 COPY package*.json ./
 RUN npm install --loglevel=info
-COPY *.js .* ./
+COPY gulpfile.js .eslintrc.json .prettierrc ormconfig.js ./
 COPY src src
 RUN npm run build-server --loglevel=info
 
