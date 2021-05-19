@@ -9,7 +9,7 @@ import ISnackbarState from '@/model/state/snackbar/ISnackbarState';
 import * as aribb24js from 'aribb24.js';
 import { Component, Prop } from 'vue-property-decorator';
 import Mpegts from 'mpegts.js';
-import SubtitleUtil from '@/util/SubtitleUtil';
+import HLSUtil from '@/util/HLSUtil';
 
 @Component({})
 export default class LiveMpegTsVideo extends BaseVideo {
@@ -18,8 +18,8 @@ export default class LiveMpegTsVideo extends BaseVideo {
 
     private snackbarState: ISnackbarState = container.get<ISnackbarState>('ISnackbarState');
     private mepgtsPlayer: Mpegts.Player | null = null;
-    private captionRenderer: aribb24js.CanvasB24Renderer | null = null;
-    private superimposeRenderer: aribb24js.CanvasB24Renderer | null = null;
+    private captionRenderer: aribb24js.CanvasRenderer | null = null;
+    private superimposeRenderer: aribb24js.CanvasRenderer | null = null;
 
     public mounted(): void {
         super.mounted();
@@ -92,13 +92,13 @@ export default class LiveMpegTsVideo extends BaseVideo {
         this.mepgtsPlayer.play();
 
         // 字幕対応
-        const captionOption = SubtitleUtil.getAribb24BaseOption();
+        const captionOption = HLSUtil.getAribb24BaseOption();
         captionOption.data_identifer = 0x80;
-        this.captionRenderer = new aribb24js.CanvasB24Renderer(captionOption);
+        this.captionRenderer = new aribb24js.CanvasRenderer(captionOption);
 
-        const superimposeOption = SubtitleUtil.getAribb24BaseOption();
+        const superimposeOption = HLSUtil.getAribb24BaseOption();
         superimposeOption.data_identifer = 0x81;
-        this.superimposeRenderer = new aribb24js.CanvasB24Renderer(superimposeOption);
+        this.superimposeRenderer = new aribb24js.CanvasRenderer(superimposeOption);
 
         this.captionRenderer.attachMedia(this.video);
         this.superimposeRenderer.attachMedia(this.video);
