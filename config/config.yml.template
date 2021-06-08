@@ -2,7 +2,7 @@ port: 8888
 apiServers:
     - http://192.168.10.10:8888
 
-mirakurunPath: http://mirakurun/
+mirakurunPath: http://mirakurun:40772/
 
 # dbtype: sqlite
 # sqlite:
