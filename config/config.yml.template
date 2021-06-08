@@ -125,14 +125,14 @@ stream:
                       -hls_segment_filename %streamFileDir%/stream%streamNum%-%09d.ts -hls_flags delete_segments -c:a
                       aac -ar 48000 -b:a 128k -ac 2 -c:v h264_nvenc -vf yadif_cuda,scale_cuda=-2:480 -b:v 1500k
                       -flags +loop-global_header %OUTPUT%'
-                - name: 720p (arib)
-                  cmd:
-                      '%FFMPEG% -re -dual_mono_mode main -fix_sub_duration -hwaccel cuda -hwaccel_output_format cuda -c:v mpeg2_cuvid -i pipe:0 -threads 0 -ignore_unknown
-                      -max_muxing_queue_size 1024 -f hls -hls_time 3 -hls_list_size 17 -hls_allow_cache 1
-                      -hls_segment_filename %streamFileDir%/stream%streamNum%-%09d.ts -hls_flags delete_segments -c:a
-                      aac -ar 48000 -b:a 192k -ac 2 -c:v h264_nvenc -vf yadif_cuda,scale_cuda=-2:720 -b:v 3000k
-                      -flags +loop-global_header -c:s webvtt -master_pl_name stream%streamNum%.m3u8
-                      %streamFileDir%/stream%streamNum%-child.m3u8'
+                # - name: 720p (arib)
+                #   cmd:
+                #       '%FFMPEG% -re -dual_mono_mode main -fix_sub_duration -hwaccel cuda -hwaccel_output_format cuda -c:v mpeg2_cuvid -i pipe:0 -threads 0 -ignore_unknown
+                #       -max_muxing_queue_size 1024 -f hls -hls_time 3 -hls_list_size 17 -hls_allow_cache 1
+                #       -hls_segment_filename %streamFileDir%/stream%streamNum%-%09d.ts -hls_flags delete_segments -c:a
+                #       aac -ar 48000 -b:a 192k -ac 2 -c:v h264_nvenc -vf yadif_cuda,scale_cuda=-2:720 -b:v 3000k
+                #       -flags +loop-global_header -c:s webvtt -master_pl_name stream%streamNum%.m3u8
+                #       %streamFileDir%/stream%streamNum%-child.m3u8'
 
     recorded:
         ts:
@@ -177,14 +177,14 @@ stream:
                       -hls_segment_filename %streamFileDir%/stream%streamNum%-%09d.ts -hls_flags delete_segments -c:a
                       aac -ar 48000 -b:a 128k -ac 2 -c:v h264_nvenc -vf yadif_cuda,scale_cuda=-2:480 -b:v 1500k
                       -flags +loop-global_header %OUTPUT%'
-                - name: 720p (arib)
-                  cmd:
-                      '%FFMPEG% -dual_mono_mode main -fix_sub_duration -hwaccel cuda -hwaccel_output_format cuda -c:v mpeg2_cuvid -i pipe:0 -threads 0 -ignore_unknown
-                      -max_muxing_queue_size 1024 -f hls -hls_time 3 -hls_list_size 0 -hls_allow_cache 1
-                      -hls_segment_filename %streamFileDir%/stream%streamNum%-%09d.ts -hls_flags delete_segments -c:a
-                      aac -ar 48000 -b:a 192k -ac 2 -c:v h264_nvenc -vf yadif_cuda,scale_cuda=-2:720 -b:v 3000k
-                      -flags +loop-global_header -c:s webvtt -master_pl_name stream%streamNum%.m3u8
-                      %streamFileDir%/stream%streamNum%-child.m3u8'
+                # - name: 720p (arib)
+                #   cmd:
+                #       '%FFMPEG% -dual_mono_mode main -fix_sub_duration -hwaccel cuda -hwaccel_output_format cuda -c:v mpeg2_cuvid -i pipe:0 -threads 0 -ignore_unknown
+                #       -max_muxing_queue_size 1024 -f hls -hls_time 3 -hls_list_size 0 -hls_allow_cache 1
+                #       -hls_segment_filename %streamFileDir%/stream%streamNum%-%09d.ts -hls_flags delete_segments -c:a
+                #       aac -ar 48000 -b:a 192k -ac 2 -c:v h264_nvenc -vf yadif_cuda,scale_cuda=-2:720 -b:v 3000k
+                #       -flags +loop-global_header -c:s webvtt -master_pl_name stream%streamNum%.m3u8
+                #       %streamFileDir%/stream%streamNum%-child.m3u8'
 
         encoded:
             webm:
