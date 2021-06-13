@@ -43,6 +43,10 @@ encode:
       cmd: '%NODE% %ROOT%/config/enc.js'
       suffix: .mp4
       rate: 4.0
+    - name: Matroska
+      cmd: '%NODE% %ROOT%/config/mkv.js'
+      suffix: .mkv
+      rate: 4.0
 
 urlscheme:
     m2ts:
