@@ -58,6 +58,10 @@ stream:
     live:
         ts:
             m2ts:
+                - name: 1080p
+                  cmd:
+                      '%FFMPEG% -re -dual_mono_mode main -hwaccel cuda -hwaccel_output_format cuda -c:v mpeg2_cuvid -i pipe:0 -sn -threads 0 -c:a aac -ar 48000 -b:a 192k -ac 2
+                       -c:v h264_nvenc -vf yadif_cuda,scale_cuda=-2:1080 -b:v 5000k -y -f mpegts pipe:1'
                 - name: 720p
                   cmd:
                       '%FFMPEG% -re -dual_mono_mode main -hwaccel cuda -hwaccel_output_format cuda -c:v mpeg2_cuvid -i pipe:0 -sn -threads 0 -c:a aac -ar 48000 -b:a 192k -ac 2
@@ -69,6 +73,12 @@ stream:
                 - name: 無変換
 
             m2tsll:
+                - name: 1080p
+                  cmd:
+                      '%FFMPEG% -dual_mono_mode main -f mpegts -analyzeduration 500000 -hwaccel cuda -hwaccel_output_format cuda -c:v mpeg2_cuvid -i pipe:0 -map 0 -c:s copy -c:d
+                      copy -ignore_unknown -fflags nobuffer -flags low_delay -max_delay 250000 -max_interleave_delta 1
+                      -threads 0 -c:a copy -c:v h264_nvenc -preset llhq -vf yadif_cuda,scale_cuda=-2:1080
+                      -b:v 5000k -bufsize 5000k -maxrate 10000k -qmin 0 -g 250 -bf 3 -b_ref_mode middle -i_qfactor 0.75 -b_qfactor 1.1 -y -f mpegts pipe:1'
                 - name: 720p
                   cmd:
                       '%FFMPEG% -dual_mono_mode main -f mpegts -analyzeduration 500000 -hwaccel cuda -hwaccel_output_format cuda -c:v mpeg2_cuvid -i pipe:0 -map 0 -c:s copy -c:d
@@ -83,6 +93,11 @@ stream:
                       -b:v 1500k -y -f mpegts pipe:1'
 
             mp4:
+                - name: 1080p
+                  cmd:
+                      '%FFMPEG% -re -dual_mono_mode main -hwaccel cuda -hwaccel_output_format cuda -c:v mpeg2_cuvid -i pipe:0 -sn -threads 0 -c:a aac -ar 48000 -b:a 192k -ac 2
+                      -c:v h264_nvenc -vf yadif_cuda,scale_cuda=-2:1080 -b:v 5000k -profile:v high -movflags frag_keyframe+empty_moov+faststart+default_base_moof -y -f mp4
+                      pipe:1'
                 - name: 720p
                   cmd:
                       '%FFMPEG% -re -dual_mono_mode main -hwaccel cuda -hwaccel_output_format cuda -c:v mpeg2_cuvid -i pipe:0 -sn -threads 0 -c:a aac -ar 48000 -b:a 192k -ac 2
@@ -95,6 +110,13 @@ stream:
                       pipe:1'
 
             hls:
+                - name: 1080p
+                  cmd:
+                      '%FFMPEG% -re -dual_mono_mode main -hwaccel cuda -hwaccel_output_format cuda -c:v mpeg2_cuvid -i pipe:0 -sn -map 0 -threads 0 -ignore_unknown
+                      -max_muxing_queue_size 1024 -f hls -hls_time 3 -hls_list_size 17 -hls_allow_cache 1
+                      -hls_segment_filename %streamFileDir%/stream%streamNum%-%09d.ts -hls_flags delete_segments -c:a
+                      copy -c:v h264_nvenc -vf yadif_cuda,scale_cuda=-2:1080 -b:v 5000k
+                      -flags +loop-global_header %OUTPUT%'
                 - name: 720p
                   cmd:
                       '%FFMPEG% -re -dual_mono_mode main -hwaccel cuda -hwaccel_output_format cuda -c:v mpeg2_cuvid -i pipe:0 -sn -map 0 -threads 0 -ignore_unknown
@@ -109,6 +131,14 @@ stream:
                       -hls_segment_filename %streamFileDir%/stream%streamNum%-%09d.ts -hls_flags delete_segments -c:a
                       aac -ar 48000 -b:a 128k -ac 2 -c:v h264_nvenc -vf yadif_cuda,scale_cuda=-2:480 -b:v 1500k
                       -flags +loop-global_header %OUTPUT%'
+                - name: 1080p (arib)
+                  cmd:
+                      '%FFMPEG% -re -dual_mono_mode main -fix_sub_duration -hwaccel cuda -hwaccel_output_format cuda -c:v mpeg2_cuvid -i pipe:0 -threads 0 -ignore_unknown
+                      -max_muxing_queue_size 1024 -f hls -hls_time 3 -hls_list_size 17 -hls_allow_cache 1
+                      -hls_segment_filename %streamFileDir%/stream%streamNum%-%09d.ts -hls_flags delete_segments -c:a
+                      aac -ar 48000 -b:a 192k -ac 2 -c:v h264_nvenc -vf yadif_cuda,scale_cuda=-2:720 -b:v 5000k
+                      -flags +loop-global_header -c:s webvtt -master_pl_name stream%streamNum%.m3u8
+                      %streamFileDir%/stream%streamNum%-child.m3u8'
                 - name: 720p (arib)
                   cmd:
                       '%FFMPEG% -re -dual_mono_mode main -fix_sub_duration -hwaccel cuda -hwaccel_output_format cuda -c:v mpeg2_cuvid -i pipe:0 -threads 0 -ignore_unknown
@@ -121,6 +151,11 @@ stream:
     recorded:
         ts:
             mp4:
+                - name: 1080p
+                  cmd:
+                      '%FFMPEG% -dual_mono_mode main -hwaccel cuda -hwaccel_output_format cuda -c:v mpeg2_cuvid -i pipe:0 -sn -threads 0 -c:a copy -c:v
+                      h264_nvenc -vf yadif_cuda,scale_cuda=-2:1080 -b:v 5000k -profile:v high -movflags frag_keyframe+empty_moov+faststart+default_base_moof -y -f mp4
+                      pipe:1'
                 - name: 720p
                   cmd:
                       '%FFMPEG% -dual_mono_mode main -hwaccel cuda -hwaccel_output_format cuda -c:v mpeg2_cuvid -i pipe:0 -sn -threads 0 -c:a aac -ar 48000 -b:a 192k -ac 2 -c:v
@@ -133,6 +168,13 @@ stream:
                       pipe:1'
 
             hls:
+                - name: 1080p
+                  cmd:
+                      '%FFMPEG% -dual_mono_mode main -hwaccel cuda -hwaccel_output_format cuda -c:v mpeg2_cuvid -i pipe:0 -sn -map 0 -threads 0 -ignore_unknown
+                      -max_muxing_queue_size 1024 -f hls -hls_time 3 -hls_list_size 0 -hls_allow_cache 1
+                      -hls_segment_filename %streamFileDir%/stream%streamNum%-%09d.ts -hls_flags delete_segments -c:a
+                      aac -ar 48000 -b:a 192k -ac 2 -c:v h264_nvenc -vf yadif_cuda,scale_cuda=-2:1080 -b:v 5000k
+                      -flags +loop-global_header %OUTPUT%'
                 - name: 720p
                   cmd:
                       '%FFMPEG% -dual_mono_mode main -hwaccel cuda -hwaccel_output_format cuda -c:v mpeg2_cuvid -i pipe:0 -sn -map 0 -threads 0 -ignore_unknown
@@ -147,6 +189,14 @@ stream:
                       -hls_segment_filename %streamFileDir%/stream%streamNum%-%09d.ts -hls_flags delete_segments -c:a
                       aac -ar 48000 -b:a 128k -ac 2 -c:v h264_nvenc -vf yadif_cuda,scale_cuda=-2:480 -b:v 1500k
                       -flags +loop-global_header %OUTPUT%'
+                - name: 1080p (arib)
+                  cmd:
+                      '%FFMPEG% -dual_mono_mode main -fix_sub_duration -hwaccel cuda -hwaccel_output_format cuda -c:v mpeg2_cuvid -i pipe:0 -threads 0 -ignore_unknown
+                      -max_muxing_queue_size 1024 -f hls -hls_time 3 -hls_list_size 0 -hls_allow_cache 1
+                      -hls_segment_filename %streamFileDir%/stream%streamNum%-%09d.ts -hls_flags delete_segments -c:a
+                      aac -ar 48000 -b:a 192k -ac 2 -c:v h264_nvenc -vf yadif_cuda,scale_cuda=-2:720 -b:v 5000k
+                      -flags +loop-global_header -c:s webvtt -master_pl_name stream%streamNum%.m3u8
+                      %streamFileDir%/stream%streamNum%-child.m3u8'
                 - name: 720p (arib)
                   cmd:
                       '%FFMPEG% -dual_mono_mode main -fix_sub_duration -hwaccel cuda -hwaccel_output_format cuda -c:v mpeg2_cuvid -i pipe:0 -threads 0 -ignore_unknown
@@ -158,28 +208,40 @@ stream:
 
         encoded:
             mp4:
+                - name: 1080p
+                  cmd:
+                      '%FFMPEG% -dual_mono_mode main -ss %SS% -hwaccel cuda -hwaccel_output_format cuda -c:v h264_cuvid -i %INPUT% -sn -threads 0 -c:a copy
+                      -c:v h264_nvenc -vf scale_cuda=-2:1080 -b:v 5000k -profile:v high -movflags frag_keyframe+empty_moov+faststart+default_base_moof -y -f mp4
+                      pipe:1'
                 - name: 720p
                   cmd:
-                      '%FFMPEG% -dual_mono_mode main -ss %SS% -hwaccel cuda -hwaccel_output_format cuda -c:v mpeg2_cuvid -i %INPUT% -sn -threads 0 -c:a aac -ar 48000 -b:a 192k -ac
+                      '%FFMPEG% -dual_mono_mode main -ss %SS% -hwaccel cuda -hwaccel_output_format cuda -c:v h264_cuvid -i %INPUT% -sn -threads 0 -c:a aac -ar 48000 -b:a 192k -ac
                       2 -c:v h264_nvenc -vf scale_cuda=-2:720 -b:v 3000k -profile:v baseline -movflags frag_keyframe+empty_moov+faststart+default_base_moof -y -f mp4
                       pipe:1'
                 - name: 480p
                   cmd:
-                      '%FFMPEG% -dual_mono_mode main -ss %SS% -hwaccel cuda -hwaccel_output_format cuda -c:v mpeg2_cuvid -i %INPUT% -sn -threads 0 -c:a aac -ar 48000 -b:a 128k -ac
+                      '%FFMPEG% -dual_mono_mode main -ss %SS% -hwaccel cuda -hwaccel_output_format cuda -c:v h264_cuvid -i %INPUT% -sn -threads 0 -c:a aac -ar 48000 -b:a 128k -ac
                       2 -c:v h264_nvenc -vf scale_cuda=-2:480 -b:v 1500k -profile:v baseline -movflags frag_keyframe+empty_moov+faststart+default_base_moof -y -f mp4
                       pipe:1'
 
             hls:
+                - name: 1080p
+                  cmd:
+                      '%FFMPEG% -dual_mono_mode main -ss %SS% -hwaccel cuda -hwaccel_output_format cuda -c:v h264_cuvid -i %INPUT% -sn -threads 0 -ignore_unknown
+                      -max_muxing_queue_size 1024 -f hls -hls_time 3 -hls_list_size 0 -hls_allow_cache 1
+                      -hls_segment_filename %streamFileDir%/stream%streamNum%-%09d.ts -hls_flags delete_segments -c:a copy
+                      -c:v h264_nvenc -vf scale_cuda=-2:1080 -b:v 5000k -profile:v high -flags
+                      +loop-global_header %OUTPUT%'
                 - name: 720p
                   cmd:
-                      '%FFMPEG% -dual_mono_mode main -ss %SS% -hwaccel cuda -hwaccel_output_format cuda -c:v mpeg2_cuvid -i %INPUT% -sn -threads 0 -ignore_unknown
+                      '%FFMPEG% -dual_mono_mode main -ss %SS% -hwaccel cuda -hwaccel_output_format cuda -c:v h264_cuvid -i %INPUT% -sn -threads 0 -ignore_unknown
                       -max_muxing_queue_size 1024 -f hls -hls_time 3 -hls_list_size 0 -hls_allow_cache 1
                       -hls_segment_filename %streamFileDir%/stream%streamNum%-%09d.ts -hls_flags delete_segments -c:a
                       aac -ar 48000 -b:a 192k -ac 2 -c:v h264_nvenc -vf scale_cuda=-2:720 -b:v 3000k -flags
                       +loop-global_header %OUTPUT%'
                 - name: 480p
                   cmd:
-                      '%FFMPEG% -dual_mono_mode main -ss %SS% -hwaccel cuda -hwaccel_output_format cuda -c:v mpeg2_cuvid -i %INPUT% -sn -threads 0 -ignore_unknown
+                      '%FFMPEG% -dual_mono_mode main -ss %SS% -hwaccel cuda -hwaccel_output_format cuda -c:v h264_cuvid -i %INPUT% -sn -threads 0 -ignore_unknown
                       -max_muxing_queue_size 1024 -f hls -hls_time 3 -hls_list_size 0 -hls_allow_cache 1
                       -hls_segment_filename %streamFileDir%/stream%streamNum%-%09d.ts -hls_flags delete_segments -c:a
                       aac -ar 48000 -b:a 128k -ac 2 -c:v h264_nvenc -vf scale_cuda=-2:480 -b:v 3000k -flags

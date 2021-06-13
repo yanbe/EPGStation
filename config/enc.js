@@ -10,6 +10,7 @@ const dualMonoMode = 'main';
 const videoHeight = parseInt(process.env.VIDEORESOLUTION, 10);
 const isDualMono = parseInt(process.env.AUDIOCOMPONENTTYPE, 10) == 2;
 const audioBitrate = videoHeight > 720 ? '192k' : '128k';
+const preset = 'hq';
 const decoder = 'mpeg2_cuvid';
 const encoder = 'h264_nvenc';
 
@@ -19,6 +20,8 @@ const args = ['-y', '-analyzeduration', analyzedurationSize, '-probesize', probe
 if (isDualMono) {
     Array.prototype.push.apply(args, ['-dual_mono_mode', dualMonoMode]);
 }
+
+Array.prototype.push.apply(args,['-y', '-vsync', '0']);
 
 // NVENC 設定
 Array.prototype.push.apply(args,['-hwaccel', 'cuda', '-hwaccel_output_format', 'cuda']);
@@ -33,17 +36,40 @@ Array.prototype.push.apply(args,['-movflags', 'faststart']);
 // 字幕データを含めたストリームをすべてマップ
 // Array.prototype.push.apply(args, ['-map', '0', '-ignore_unknown', '-max_muxing_queue_size', maxMuxingQueueSize, '-sn']);
 
+// 映像ビットレート
+let videoBitrate;
+let videoMaxBitrate;
+if (videoHeight >= 1080) {
+    videoBitrate = '5000k';
+    videoMaxBitrate = '10000k';
+} else if (videoHeight >= 720) {
+    videoBitrate = '3000k';
+    videoMaxBitrate = '6000k';
+} else {
+    videoBitrate = '1500k';
+    videoMaxBitrate = '3000k';
+}
+
 // video filter 設定
 let videoFilter = 'yadif_cuda';
-if (videoHeight > 720) {
-    videoFilter += ',scale_cuda=-2:720'
-}
 Array.prototype.push.apply(args, ['-vf', videoFilter]);
 
+// Command Line for Latency-Tolerant High-Quality Tran scoding
+// ffmpeg -y -vsync 0 -hwaccel cuda -hwaccel_output_format cuda -i input.mp4 -c:a copy -c:v h264_nvenc -preset p6 -tune hq -b:v 5M 
+// -bufsize 5M -maxrate 10M -qmin 0 -g 250 -bf 3 -b_ref_mode middle -temporal-aq 1 -rc-lookahead 20 -i_qfactor 0.75 -b_qfactor 1.1 output.mp4
 // その他設定
 Array.prototype.push.apply(args,[
-    '-aspect', '16:9',
     '-c:v', encoder,
+    '-preset', preset,
+    '-b:v', videoBitrate,
+    '-bufsize', videoBitrate,
+    '-maxrate', videoMaxBitrate,
+    '-qmin', '0',
+    '-g', '250',
+    '-bf', '3',
+    '-b_ref_mode', 'middle',
+    '-i_qfactor', '0.75',
+    '-b_qfactor', '1.1',
     '-f', 'mp4',
     '-c:a', 'aac',
     '-ar', '48000',
