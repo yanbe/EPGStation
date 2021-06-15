@@ -29,9 +29,9 @@ recorded:
       path: '%ROOT%/recorded'
 
 thumbnail: '%ROOT%/thumbnail'
-thumbnailSize: 480x270
+thumbnailSize: 800x450
 thumbnailPosition: 30
-thumbnailCmd: '%FFMPEG% -ss %THUMBNAIL_POSITION% -y -hwaccel cuda -hwaccel_output_format cuda -c:v mpeg2_cuvid -i %INPUT% -vf thumbnail_cuda=2,scale_cuda=480:270:interp_algo=lanczos,hwdownload,format=nv12 -vframes 1 %OUTPUT%'
+thumbnailCmd: '%FFMPEG% -ss %THUMBNAIL_POSITION% -y -hwaccel cuda -hwaccel_output_format cuda -c:v mpeg2_cuvid -i %INPUT% -vf yadif_cuda,thumbnail_cuda=2,scale_cuda=800:450:interp_algo=lanczos,hwdownload,format=nv12 -vframes 1 %OUTPUT%'
 
 ffmpeg: /usr/local/bin/ffmpeg
 ffprobe: /usr/local/bin/ffprobe
