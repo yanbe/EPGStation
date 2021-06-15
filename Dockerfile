@@ -3,26 +3,26 @@ ENV DEBIAN_FRONTEND noninteractive
 ENV DEBCONF_NOWARNINGS yes
 RUN apt-get -y update
 
-RUN apt-get install -y git pkgconf
+RUN apt-get install -y --no-install-recommends git pkgconf
 WORKDIR /ffmpeg_sources
 RUN git clone https://git.videolan.org/git/ffmpeg/nv-codec-headers.git -b sdk/9.1 && \
     cd nv-codec-headers && \
     make install 
-RUN apt-get install -y autoconf libtool libpng-dev libass-dev
+RUN apt-get install -y --no-install-recommends autoconf automake libtool libpng-dev libass-dev
 RUN git clone https://github.com/nkoriyama/aribb24.git && \
     cd aribb24 && \
     ./bootstrap && \
     ./configure && \
     make install
-RUN apt-get install -y build-essential yasm cmake libtool libc6 libc6-dev unzip wget libnuma1 libnuma-dev && \
+RUN apt-get install -y --no-install-recommends build-essential yasm cmake libtool libc6 libc6-dev unzip wget libnuma1 libnuma-dev && \
     git clone https://git.ffmpeg.org/ffmpeg.git ffmpeg/ && \
     cd ffmpeg && \
     ./configure --enable-cuda-nvcc --enable-cuvid --enable-nvenc --enable-nonfree --enable-libnpp --enable-version3 --enable-gpl --enable-libaribb24 --enable-libass --extra-cflags=-I/usr/local/cuda/include --extra-ldflags=-L/usr/local/cuda/lib64 && \
     make install
 
-RUN apt-get install -y curl && \
+RUN apt-get install -y --no-install-recommends curl && \
     curl -fsSL https://deb.nodesource.com/setup_14.x | bash - && \
-    apt-get install -y nodejs
+    apt-get install -y --no-install-recommends nodejs
 
 WORKDIR /app/client
 COPY client/package*.json ./
@@ -32,7 +32,7 @@ COPY client/ .
 COPY api.d.ts ../
 RUN npm run build --loglevel=info
 
-RUN apt-get install -y build-essential python
+RUN apt-get install -y --no-install-recommends build-essential python
 WORKDIR /app
 COPY package*.json ./
 RUN npm install --loglevel=info
