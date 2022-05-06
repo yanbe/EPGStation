@@ -141,7 +141,7 @@ class V1MigrationTool {
             }
 
             return JSON.parse(file);
-        } catch (err) {
+        } catch (err: any) {
             if (err.code === 'ENOENT') {
                 this.log.system.error(`${this.v1BackupFilePath} is not found`);
                 process.exit(1);
@@ -462,6 +462,8 @@ class V1MigrationTool {
             newRecorded.extended = oldRecorded.extended;
             newRecorded.extended = StrUtil.toHalf(oldRecorded.extended);
         }
+        newRecorded.rawExtended = null;
+        newRecorded.rawHalfWidthExtended = null;
         newRecorded.genre1 = oldRecorded.genre1;
         newRecorded.subGenre1 = oldRecorded.genre2;
         newRecorded.genre2 = oldRecorded.genre3;

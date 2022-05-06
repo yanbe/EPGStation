@@ -24,7 +24,6 @@ PC からの閲覧でもモダンな UI で操作可能です
 -   API
     -   [WebAPI Document](doc/webapi.md)
 
-
 [aribb24.js]: https://github.com/monyone/aribb24.js
 [mpegts.js]: https://github.com/xqq/mpegts.js
 
@@ -42,12 +41,13 @@ PC からの閲覧でもモダンな UI で操作可能です
 ## 動作環境
 
 -   Linux / macOS / Windows
--   [Node.js](http://nodejs.org/) : ^14.6.0
+-   [Node.js](http://nodejs.org/) : ^14.6.0 || ^16.6.1
 -   [Mirakurun](https://github.com/Chinachu/Mirakurun) : ^3.2.0
--   いずれかのデータベース (文字コードは utf-8 とする)
+-   いずれかのデータベース
     -   [SQLite3](https://www.sqlite.org/)（設定不要だが検索機能に制限あり）[標準]
         -   [SQLite3 使用時の正規表現での検索の有効化について](doc/sqlite3-regexp.md)
-    -   [MySQL](https://www.mysql.com/jp/) ([MariaDB](https://mariadb.org/))【推奨(要設定)】
+    -   [MySQL](https://www.mysql.com/jp/) ([MariaDB](https://mariadb.org/))【推奨(要設定)】※文字コードは utf8mb4
+        -   [Mirakurun 3.9.0-beta.24 以降の設定について](doc/mysql-mirakurun-3.9.0-beta.24.md)
     -   ~~[PostgreSQL](https://www.postgresql.org/) (version 9.5 以上)~~
 -   [FFmpeg](http://ffmpeg.org/)
 
@@ -61,7 +61,10 @@ sqlite3 パッケージのインストール時にバイナリが存在しなか
 
 ### 構築済み推奨環境
 
-[docker-mirakurun-epgstation](https://github.com/l3tnun/docker-mirakurun-epgstation) で動作を確認しています
+-   [docker-mirakurun-epgstation](https://github.com/l3tnun/docker-mirakurun-epgstation)
+
+-   [nvenc + docker 環境での構築例](https://github.com/kazuki0824/EPGStation-nvenc-docker)
+    [(created by kazuki0824)](https://github.com/kazuki0824)
 
 ---
 

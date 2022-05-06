@@ -8,7 +8,7 @@ export const post: Operation = async (req, res) => {
     const recordedApiModel = container.get<IRecordedApiModel>('IRecordedApiModel');
 
     try {
-        if (typeof req.body.file === 'undefined') {
+        if (typeof req.file === 'undefined') {
             throw new Error('FileIsNotFound');
         }
 
@@ -27,7 +27,7 @@ export const post: Operation = async (req, res) => {
         await recordedApiModel.addUploadedVideoFile(option);
 
         api.responseJSON(res, 200, { code: 200, result: 'ok' });
-    } catch (err) {
+    } catch (err: any) {
         api.responseServerError(res, err.message);
     }
 };

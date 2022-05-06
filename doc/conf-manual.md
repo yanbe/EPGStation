@@ -13,6 +13,7 @@
     -   [利用する FFmpeg を明示的に指定したい](#ffmpeg)
     -   [利用する FFprobe を明示的に指定したい](#ffprobe)
 -   [詳細設定](#詳細設定)
+    -   [番組情報の囲み文字の設定を変更したい](#needtoreplaceenclosingcharacters)
     -   [録画時の Mirakurun の優先度を変更したい](#recpriority)
     -   [録画競合時の Mirakurun の優先度を変更したい](#conflictpriority)
     -   [時刻指定予約時の開始マージンを変更したい](#timespecifiedstartmargin)
@@ -30,6 +31,7 @@
     -   [ドロップログの保存先を変更したい](#dropLog)
     -   [アクセス URL の設定をルートではなくサブディレクトリ下に変更したい](#subdirectory)
     -   [Swagger UI で使用するサーバリストを変更したい](#apiservers)
+    -   [CORS ヘッダーをすべて許可したい](#isallowallcors)
 -   [ファイル保存先](#ファイル保存先)
     -   [録画ファイルの保存先を変更したい](#recorded)
     -   [一時録画先を設定したい](#recordedtmp)
@@ -50,6 +52,7 @@
     -   [録画開始時に外部コマンドを実行したい](#recordingstartcommand)
     -   [録画終了時に外部コマンドを実行したい](#recordingfinishcommand)
     -   [録画失敗時に外部コマンドを実行したい](#recordingfailedcommand)
+    -   [エンコード終了時にコマンドを実行したい](#encodingfinishcommand)
     -   [エンコードやストリーミングで使用するプロセス数の上限を変更したい](#encodeprocessnum)
     -   [同時にエンコードするプロセス数の上限を更新したい](#concurrentencodenum)
     -   [録画ファイルを自動でエンコードしたい](#encode)
@@ -218,6 +221,18 @@ ffprobe: '/usr/bin/ffprobe'
 ---
 
 ## 詳細設定
+
+### needToReplaceEnclosingCharacters
+
+#### 番組情報の囲み文字を [] で括った文字に置換するか
+
+| 種類    | デフォルト値 | 必須 |
+| ------- | ------------ | ---- |
+| boolean | true         | no   |
+
+```yaml
+needToReplaceEnclosingCharacters: true
+```
 
 ### recPriority
 
@@ -464,6 +479,14 @@ apiServers:
 ```
 
 [WebAPI Document](./webapi.md)
+
+### isAllowAllCORS
+
+#### CORS ヘッダーをすべて許可する (いずれ真面目に実装した際に削除する予定)
+
+| 種類    | デフォルト値 | 必須 |
+| ------- | ------------ | ---- |
+| boolean | false        | no   |
 
 ---
 
@@ -759,6 +782,36 @@ recordingPrepRecFailedCommand: '/usr/bin/logger prepfailed'
 recordingStartCommand: '/bin/node /home/hoge/fuga.js start'
 recordingFinishCommand: '/bin/bash /home/hoge/foo.sh end'
 recordingFailedCommand: '/usr/bin/logger recfailed'
+```
+
+### encodingFinishCommand
+
+-   エンコード終了時に実行するコマンド
+
+| 種類   | デフォルト値 | 必須 |
+| ------ | ------------ | ---- |
+| string | -            | no   |
+
+-   実行時に渡される環境変数は以下の通り
+
+| 変数名                 | 種類           | 説明                                   |
+| ---------------------- | -------------- | -------------------------------------- |
+| RECORDEDID             | number         | recorded id                            |
+| VIDEOFILEID            | number \| null | video file id                          |
+| OUTPUTPATH             | string \| null | エンコードしたビデオファイルのフルパス |
+| MODE                   | string         | エンコードモード名                     |
+| CHANNELID              | number         | channel id                             |
+| CHANNELNAME            | string \| null | 放送局名                               |
+| HALF_WIDTH_CHANNELNAME | string \| null | 放送局名(半角)                         |
+| NAME                   | string         | 番組名                                 |
+| HALF_WIDTH_NAME        | string         | 番組名(半角)                           |
+| DESCRIPTION            | string \| null | 番組概要                               |
+| HALF_WIDTH_DESCRIPTION | string \| null | 番組概要(半角)                         |
+| EXTENDED               | string \| null | 番組詳細                               |
+| HALF_WIDTH_EXTENDED    | string \| null | 番組詳細(半角)                         |
+
+```yaml
+encodingFinishCommand: '/bin/node /home/hoge/fuga.js finish'
 ```
 
 ### encodeProcessNum

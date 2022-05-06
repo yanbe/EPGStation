@@ -23,7 +23,7 @@ class Configuration implements IConfiguration {
 
         try {
             this.templateConfig = this.readConfig(Configuration.CONFIG_TEMPLATE_FILE_PATH, true);
-        } catch (err) {
+        } catch (err: any) {
             this.templateConfig = null;
         }
 
@@ -35,7 +35,7 @@ class Configuration implements IConfiguration {
             try {
                 const newConfig = <any>yaml.load(await fs.promises.readFile(Configuration.CONFIG_FILE_PATH, 'utf-8'));
                 this.config = this.formatConfig(newConfig);
-            } catch (err) {
+            } catch (err: any) {
                 this.log.system.error('read config error');
                 this.log.system.error(err);
             }
@@ -52,7 +52,7 @@ class Configuration implements IConfiguration {
         let str: string = '';
         try {
             str = fs.readFileSync(configPath, 'utf-8');
-        } catch (e) {
+        } catch (e: any) {
             if (e.code === 'ENOENT') {
                 const errMsg = `${configPath} is not found`;
                 if (isWarning === true) {
@@ -218,7 +218,9 @@ namespace Configuration {
     export const DEFAULT_VALUE: IConfigFile = {
         mirakurunPath: 'http+unix://%2Fvar%2Frun%2Fmirakurun.sock/',
         apiServers: [],
+        isAllowAllCORS: false,
         dbtype: 'sqlite',
+        needToReplaceEnclosingCharacters: true,
         epgUpdateIntervalTime: 10,
         conflictPriority: 1,
         recPriority: 2,

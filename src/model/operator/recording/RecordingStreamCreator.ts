@@ -1,6 +1,7 @@
 import * as http from 'http';
 import { inject, injectable } from 'inversify';
 import Mirakurun from 'mirakurun';
+import { finished } from 'stream';
 import * as apid from '../../../../api';
 import * as mapid from '../../../../node_modules/mirakurun/api';
 import Reserve from '../../../db/entities/Reserve';
@@ -136,13 +137,13 @@ export default class RecordingStreamCreator implements IRecordingStreamCreator {
             tunerProgram.stream = s;
 
             // stream 停止時に programs から削除する
-            tunerProgram.stream.once('end', () => {
+            finished(tunerProgram.stream, {}, err => {
+                if (err) {
+                    this.log.system.error(`RecordingStreamCreator stream error: ${reserve.id}`);
+                }
                 this.deleteReserve(reserve.id);
             });
-            tunerProgram.stream.once('error', () => {
-                this.deleteReserve(reserve.id);
-            });
-        } catch (err) {
+        } catch (err: any) {
             this.deleteReserve(reserve.id);
         }
 
@@ -198,7 +199,7 @@ export default class RecordingStreamCreator implements IRecordingStreamCreator {
                             isOk = false;
                             break;
                         }
-                    } catch (err) {
+                    } catch (err: any) {
                         this.log.system.warn(`tuner program get error: ${p.reserve.id}`);
                     }
                 }
@@ -260,7 +261,7 @@ export default class RecordingStreamCreator implements IRecordingStreamCreator {
 
         // 予約終了時刻を過ぎたら stream を停止する
         this.timerIndex[reserve.id] = setTimeout(() => {
-            this.destoryStream(reserve);
+            this.destroyStream(reserve);
         }, reserve.endAt - now + 1000 * this.config.timeSpecifiedEndMargin);
 
         // mirakurun から channel stream を受け取る
@@ -292,7 +293,7 @@ export default class RecordingStreamCreator implements IRecordingStreamCreator {
      * stream 停止
      * @param reserve: Reserve
      */
-    private destoryStream(reserve: Reserve): void {
+    private destroyStream(reserve: Reserve): void {
         clearTimeout(this.timerIndex[reserve.id]);
         delete this.timerIndex[reserve.id];
 
@@ -322,7 +323,7 @@ export default class RecordingStreamCreator implements IRecordingStreamCreator {
 
         // timer 再設定
         this.timerIndex[reserve.id] = setTimeout(() => {
-            this.destoryStream(reserve);
+            this.destroyStream(reserve);
         }, reserve.endAt - new Date().getTime() + 1000 * this.config.timeSpecifiedEndMargin);
     }
 }

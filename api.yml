@@ -411,6 +411,9 @@ components:
                 extended:
                     description: 番組拡張
                     type: string
+                rawExtended:
+                    description: 番組拡張 (Mirakurun の extended)
+                    type: object
                 genre1:
                     $ref: '#/components/schemas/ProgramGenreLv1'
                 subGenre1:
@@ -784,10 +787,14 @@ components:
                     type: object
                     description: 時刻指定オプション
                     required:
+                        - name
                         - channelId
                         - startAt
                         - endAt
                     properties:
+                        name:
+                            description: 番組名
+                            type: string
                         channelId:
                             $ref: '#/components/schemas/ChannelId'
                         startAt:
@@ -876,8 +883,10 @@ components:
                     type: string
                 description:
                     type: string
-                extended?:
+                extended:
                     type: string
+                rawExtended:
+                    type: object
                 genre1:
                     $ref: '#/components/schemas/ProgramGenreLv1'
                 subGenre1:
@@ -1019,6 +1028,9 @@ components:
                 extended:
                     description: 番組拡張
                     type: string
+                rawExtended:
+                    description: 番組拡張 (Mirakurun の extended)
+                    type: object
                 genre1:
                     $ref: '#/components/schemas/ProgramGenreLv1'
                 subGenre1:
@@ -1269,7 +1281,7 @@ components:
                 channels:
                     type: array
                     items:
-                       $ref: '#/components/schemas/RecordedChannelListItem'
+                        $ref: '#/components/schemas/RecordedChannelListItem'
                 genres:
                     type: array
                     items:
@@ -1593,6 +1605,14 @@ components:
             in: query
             name: isHalfWidth
             required: true
+            schema:
+                type: boolean
+
+        NeedsRawExtended:
+            description: rawExtended が必要か
+            in: query
+            name: needsRawExtended
+            required: false
             schema:
                 type: boolean
 

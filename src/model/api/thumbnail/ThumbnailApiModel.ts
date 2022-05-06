@@ -51,4 +51,22 @@ export default class ThumbnailApiModel implements IThumbnailApiModel {
     public async fileCleanup(): Promise<void> {
         await this.ipc.thumbnail.fileCleanup();
     }
+
+    /**
+     * 指定したビデオファイルでサムネイルを追加させる
+     * @param videoFileId: apid.VideoFileId
+     * @return Promise<void>
+     */
+    public async add(videoFileId: apid.VideoFileId): Promise<void> {
+        await this.ipc.thumbnail.add(videoFileId);
+    }
+
+    /**
+     * 指定した id サムネイルを削除
+     * @param thumbnailId: apid.ThumbnailId
+     * @return Promise<void>
+     */
+    public async delete(thumbnailId: apid.ThumbnailId): Promise<void> {
+        await this.ipc.thumbnail.delete(thumbnailId);
+    }
 }
