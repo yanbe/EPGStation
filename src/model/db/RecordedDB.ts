@@ -45,7 +45,7 @@ export default class RecordedDB implements IRecordedDB {
                 await queryRunner.manager.insert(Recorded, item);
             }
             await queryRunner.commitTransaction();
-        } catch (err) {
+        } catch (err: any) {
             console.error(err);
             hasError = err;
             await queryRunner.rollbackTransaction();
@@ -129,6 +129,25 @@ export default class RecordedDB implements IRecordedDB {
                 dropLogFileId: null,
             })
             .where({ dropLogFileId: dropLogFileId });
+        await this.promieRetry.run(() => {
+            return queryBuilder.execute();
+        });
+    }
+
+    /**
+     * 指定した ruleId を削除する
+     * @param ruleId: apid.RuleId
+     * @return Promise<void>
+     */
+    public async removeRuleId(ruleId: apid.RuleId): Promise<void> {
+        const connection = await this.op.getConnection();
+        const queryBuilder = connection
+            .createQueryBuilder()
+            .update(Recorded)
+            .set({
+                ruleId: null,
+            })
+            .where({ ruleId: ruleId });
         await this.promieRetry.run(() => {
             return queryBuilder.execute();
         });
@@ -483,5 +502,27 @@ export default class RecordedDB implements IRecordedDB {
         });
 
         return typeof result === 'undefined' ? null : result;
+    }
+
+    /**
+     * 指定した reserveId の録画を返す
+     * @param reserveId: apid.ReserveId
+     * @return Promise<Recorded[]>
+     */
+    public async findReserveId(reserveId: apid.ReserveId): Promise<Recorded[]> {
+        const connection = await this.op.getConnection();
+
+        const queryBuilder = connection
+            .getRepository(Recorded)
+            .createQueryBuilder('recorded')
+            .where({ reserveId: reserveId })
+            .leftJoinAndSelect('recorded.videoFiles', 'videoFiles')
+            .leftJoinAndSelect('recorded.thumbnails', 'thumbnails')
+            .leftJoinAndSelect('recorded.dropLogFile', 'dropLogFile')
+            .leftJoinAndSelect('recorded.tags', 'tags');
+
+        return await this.promieRetry.run(() => {
+            return queryBuilder.getMany();
+        });
     }
 }

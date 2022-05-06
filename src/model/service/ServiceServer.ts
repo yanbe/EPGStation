@@ -1,5 +1,6 @@
 import * as bodyParser from 'body-parser';
-import express from 'express';
+import cors from 'cors';
+import express, { NextFunction } from 'express';
 import * as openapi from 'express-openapi';
 import * as fs from 'fs';
 import * as http from 'http';
@@ -46,6 +47,9 @@ class ServiceServer implements IServiceServer {
     private init(): void {
         this.setLog();
         const api = this.getApiDocument(ServiceServer.API_YML);
+        if (this.config.isAllowAllCORS === true) {
+            this.app.use(cors());
+        }
         this.setSwaggerUI();
         this.createUploadDir();
         this.initOpenApi(api);
@@ -93,24 +97,10 @@ class ServiceServer implements IServiceServer {
             app: this.app,
             docsPath: '/docs',
             consumesMiddleware: {
-                'application/json': bodyParser.json(),
-                'text/text': bodyParser.text(),
+                'application/json': bodyParser.json() as any,
+                'text/text': bodyParser.text() as any,
                 'multipart/form-data': (req, res, next) => {
-                    this.getUploader().single('file')(req, res, (err: any) => {
-                        if (err) {
-                            return next(err.message);
-                        }
-
-                        if (typeof req.body.recordedId === 'string') {
-                            req.body.recordedId = parseInt(req.body.recordedId, 10);
-                        }
-
-                        if (typeof req.file !== 'undefined' && typeof req.file.fieldname !== 'undefined') {
-                            req.body.file = req.file.filename;
-                        }
-
-                        return next();
-                    });
+                    this.uploadFile(req as any, res as any, next);
                 },
             },
             errorMiddleware: (err, _req, res, _next) => {
@@ -193,42 +183,57 @@ class ServiceServer implements IServiceServer {
         // upload dir
         try {
             fs.statSync(this.config.uploadTempDir);
-        } catch (e) {
+        } catch (e: any) {
             this.log.system.info(`mkdirp: ${this.config.uploadTempDir}`);
             mkdirp.sync(this.config.uploadTempDir);
         }
     }
 
     /**
-     * multer.Multer を生成する
+     * ファイルを upload する
+     * @param req
+     * @param res
+     * @param next
      */
-    private getUploader(): multer.Multer {
-        // uploader
+    private uploadFile(req: any, res: any, next: NextFunction): void {
+        // uploade 生成
+        let fileName = '';
         const storage = multer.diskStorage({
             destination: this.config.uploadTempDir,
-            filename: (req, file, cb) => {
-                const fileName =
+            filename: (_req, file, cb) => {
+                fileName =
                     file.fieldname +
                     '-' +
                     new Date().getTime().toString(16) +
                     Math.floor(100000 * Math.random()).toString(16);
                 cb(null, fileName);
-
-                // 切断時はファイルを削除
-                (<any>req).on('close', async () => {
-                    const filePath = path.join(this.config.uploadTempDir, fileName);
-                    try {
-                        await FileUtil.unlink(filePath);
-                        this.log.access.info(`delete upload file: ${filePath}`);
-                    } catch (err) {
-                        this.log.access.error(`upload file delete error: ${filePath}`);
-                        this.log.access.error(err.message);
-                    }
-                });
             },
         });
 
-        return multer({ storage: storage });
+        multer({ storage: storage }).single('file')(req as any, res as any, async (err: any) => {
+            if (err) {
+                // エラー時はファイルを削除
+                const filePath = path.join(this.config.uploadTempDir, fileName);
+                try {
+                    await FileUtil.unlink(filePath);
+                    this.log.access.info(`delete upload file: ${filePath}`);
+                } catch (err: any) {
+                    this.log.access.error(`upload file delete error: ${filePath}`);
+                    this.log.access.error(err.message);
+                }
+                return next(err.message);
+            }
+
+            if (typeof req.body.recordedId === 'string') {
+                req.body.recordedId = parseInt(req.body.recordedId, 10);
+            }
+
+            if (typeof req.file !== 'undefined' && typeof req.file.fieldname !== 'undefined') {
+                req.body.file = req.file.filename;
+            }
+
+            return next();
+        });
     }
 
     /**

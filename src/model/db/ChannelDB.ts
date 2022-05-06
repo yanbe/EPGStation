@@ -87,7 +87,7 @@ export default class ChannelDB implements IChannelDB {
             }
 
             await queryRunner.commitTransaction();
-        } catch (err) {
+        } catch (err: any) {
             console.error(err);
             hasError = true;
             await queryRunner.rollbackTransaction();
@@ -170,7 +170,7 @@ export default class ChannelDB implements IChannelDB {
             .getRepository(Channel)
             .createQueryBuilder('channel')
             .where(queryOption)
-            .orderBy('channel.channelTypeId, channel.remoteControlKeyId, channel.id', 'ASC');
+            .orderBy('channel.channelTypeId, channel.remoteControlKeyId, channel.serviceId', 'ASC');
 
         const result = await this.promieRetry.run(() => {
             return repository.getMany();
@@ -190,7 +190,7 @@ export default class ChannelDB implements IChannelDB {
         const queryBuilder = connection
             .getRepository(Channel)
             .createQueryBuilder('channel')
-            .orderBy('channel.channelTypeId, channel.remoteControlKeyId, channel.id', 'ASC');
+            .orderBy('channel.channelTypeId, channel.remoteControlKeyId, channel.serviceId', 'ASC');
 
         const result = await this.promieRetry.run(() => {
             return queryBuilder.getMany();

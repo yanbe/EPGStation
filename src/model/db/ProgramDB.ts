@@ -6,6 +6,8 @@ import * as mapid from '../../../node_modules/mirakurun/api';
 import Program from '../../db/entities/Program';
 import DateUtil from '../../util/DateUtil';
 import StrUtil from '../../util/StrUtil';
+import IConfigFile from '../IConfigFile';
+import IConfiguration from '../IConfiguration';
 import ILogger from '../ILogger';
 import ILoggerModel from '../ILoggerModel';
 import IPromiseRetry from '../IPromiseRetry';
@@ -36,15 +38,18 @@ interface KeywordOption {
 @injectable()
 export default class ProgramDB implements IProgramDB {
     private log: ILogger;
+    private config: IConfigFile;
     private op: IDBOperator;
     private promieRetry: IPromiseRetry;
 
     constructor(
         @inject('ILoggerModel') logger: ILoggerModel,
+        @inject('IConfiguration') conf: IConfiguration,
         @inject('IDBOperator') op: IDBOperator,
         @inject('IPromiseRetry') promieRetry: IPromiseRetry,
     ) {
         this.log = logger.getLogger();
+        this.config = conf.getConfig();
         this.op = op;
         this.promieRetry = promieRetry;
     }
@@ -84,7 +89,7 @@ export default class ProgramDB implements IProgramDB {
             }
 
             await queryRunner.commitTransaction();
-        } catch (err) {
+        } catch (err: any) {
             console.error(err);
             hasError = true;
             await queryRunner.rollbackTransaction();
@@ -154,7 +159,10 @@ export default class ProgramDB implements IProgramDB {
         const jaDate = DateUtil.getJaDate(new Date(program.startAt));
 
         // 番組名
-        const name = StrUtil.toDBStr(program.name);
+        const name =
+            this.config.needToReplaceEnclosingCharacters === true
+                ? StrUtil.toDBStr(StrUtil.replaceEnclosedCharacters(program.name))
+                : StrUtil.toDBStr(program.name);
         const halfWidthName = StrUtil.toHalf(name);
 
         const value: QueryDeepPartialEntity<Program> = {
@@ -188,7 +196,10 @@ export default class ProgramDB implements IProgramDB {
             value.description = null;
             value.halfWidthDescription = null;
         } else {
-            const description = StrUtil.toDBStr(program.description);
+            const description =
+                this.config.needToReplaceEnclosingCharacters === true
+                    ? StrUtil.toDBStr(StrUtil.replaceEnclosedCharacters(program.description))
+                    : StrUtil.toDBStr(program.description);
             value.description = description;
             value.halfWidthDescription = StrUtil.toHalf(description);
         }
@@ -197,10 +208,19 @@ export default class ProgramDB implements IProgramDB {
         if (typeof program.extended === 'undefined') {
             value.extended = null;
             value.halfWidthExtended = null;
+            value.rawExtended = null;
+            value.rawHalfWidthExtended = null;
         } else {
             const extended = this.createExtendedStr(program.extended);
             value.extended = extended;
             value.halfWidthExtended = StrUtil.toHalf(extended);
+
+            value.rawExtended = JSON.stringify(program.extended);
+            const halfRawExtended: { [key: string]: string } = {};
+            for (const key in program.extended) {
+                halfRawExtended[StrUtil.toHalf(key)] = StrUtil.toHalf(program.extended[key]);
+            }
+            value.rawHalfWidthExtended = JSON.stringify(halfRawExtended);
         }
 
         // video
@@ -212,9 +232,23 @@ export default class ProgramDB implements IProgramDB {
         }
 
         // audio
-        if (typeof program.audio !== 'undefined') {
-            value.audioSamplingRate = program.audio.samplingRate;
-            value.audioComponentType = program.audio.componentType;
+        if (typeof (program as any).audio !== 'undefined') {
+            value.audioSamplingRate = (program as any).audio.samplingRate;
+            value.audioComponentType = (program as any).audio.componentType;
+        }
+
+        // audios
+        if (typeof (program as any).audios !== 'undefined') {
+            for (const audio of (program as any).audios) {
+                // TODO 複数音声データに対応する
+                // 互換性維持のため main の音声情報だけを格納する
+                if (audio.isMain === false) {
+                    continue;
+                }
+
+                value.audioSamplingRate = audio.samplingRate;
+                value.audioComponentType = audio.componentType;
+            }
         }
 
         return value;
@@ -237,7 +271,7 @@ export default class ProgramDB implements IProgramDB {
 
         const ret = StrUtil.toDBStr(str).trim();
 
-        return ret;
+        return this.config.needToReplaceEnclosingCharacters === true ? StrUtil.replaceEnclosedCharacters(ret) : ret;
     }
 
     /**
@@ -295,7 +329,7 @@ export default class ProgramDB implements IProgramDB {
             }
 
             await queryRunner.commitTransaction();
-        } catch (err) {
+        } catch (err: any) {
             console.error(err);
             hasError = true;
             await queryRunner.rollbackTransaction();

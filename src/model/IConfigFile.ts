@@ -53,6 +53,8 @@ export default interface IConfigFile {
 
     apiServers: string[];
 
+    isAllowAllCORS: boolean;
+
     dbtype: Enums.DBType;
     sqlite?: {
         extensions?: string[];
@@ -73,6 +75,9 @@ export default interface IConfigFile {
         database: string;
         password: string;
     };
+
+    // 囲み文字を置換するか
+    needToReplaceEnclosingCharacters: boolean;
 
     // epg 更新時間間隔 (分)
     epgUpdateIntervalTime: number;
@@ -149,6 +154,7 @@ export default interface IConfigFile {
     recordingStartCommand?: string; // 録画開始
     recordingFinishCommand?: string; // 録画終了
     recordingFailedCommand?: string; // 録画中のエラー
+    encodingFinishCommand?: string; // エンコード終了
 
     // 視聴 URL Scheme 設定
     urlscheme: {

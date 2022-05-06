@@ -66,8 +66,25 @@ class RecordingManageModel implements IRecordingManageModel {
             this.deleteRecording(reserve);
         });
 
-        this.recordingEvent.setRecordingFailed(reserve => {
+        this.recordingEvent.setRecordingFailed(async reserve => {
             this.deleteRecording(reserve);
+
+            const recordeds = await this.recordedDB.findReserveId(reserve.id);
+
+            if (recordeds.length < 3) {
+                // 録画を再設定
+                const recorder = await this.provider();
+                if (recorder.setTimer(reserve, false) === true) {
+                    this.log.system.info(`readd recording: ${reserve.id}`);
+                    this.recordingIndex[reserve.id] = recorder;
+                } else {
+                    this.log.system.error(`readd recording error: ${reserve.id}`);
+                }
+            } else {
+                // リトライ回数オーバー
+                this.log.system.error(`recording retry over: ${reserve.id}`);
+                this.recordingEvent.emitRecordingRetryOver(reserve);
+            }
         });
 
         this.recordingEvent.setFinishRecording(reserve => {
@@ -117,7 +134,7 @@ class RecordingManageModel implements IRecordingManageModel {
             // 録画中から録画済みへ変更
             try {
                 await this.recordedDB.removeRecording(r.id);
-            } catch (err) {
+            } catch (err: any) {
                 this.log.system.error(`failed to remove recording: ${r.id}`);
                 this.log.system.error(err);
                 continue;
@@ -188,7 +205,7 @@ class RecordingManageModel implements IRecordingManageModel {
                     this.log.system.debug(`add recording: ${reserve.id}`);
                     this.recordingIndex[reserve.id] = recorder;
                 } else {
-                    this.log.system.error(`add recordgin error: ${reserve.id}`);
+                    this.log.system.error(`add recording error: ${reserve.id}`);
                 }
             }
         }
@@ -250,6 +267,7 @@ class RecordingManageModel implements IRecordingManageModel {
             return;
         }
 
+        this.log.system.info(`cancel recording reserveId: ${reserveId}, isPlanToDelete: ${isPlanToDelete}`);
         return this.recordingIndex[reserveId].cancel(isPlanToDelete);
     }
 

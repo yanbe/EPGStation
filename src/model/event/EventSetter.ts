@@ -11,6 +11,7 @@ import IRecordedTagManadeModel from '../operator/recordedTag/IRecordedTagManadeM
 import IRecordingManageModel from '../operator/recording/IRecordingManageModel';
 import IReservationManageModel from '../operator/reservation/IReservationManageModel';
 import IThumbnailManageModel from '../operator/thumbnail/IThumbnailManageModel';
+import IOperatorEncodeEvent from './IOperatorEncodeEvent';
 import IEPGUpdateEvent from './IEPGUpdateEvent';
 import IEventSetter from './IEventSetter';
 import IRecordedEvent from './IRecordedEvent';
@@ -24,6 +25,7 @@ import IThumbnailEvent from './IThumbnailEvent';
 export default class EventSetter implements IEventSetter {
     private log: ILogger;
     private epgUpdateEvent: IEPGUpdateEvent;
+    private encodeEvent: IOperatorEncodeEvent;
     private ruleEvent: IRuleEvent;
     private reserveEvent: IReserveEvent;
     private recordedEvent: IRecordedEvent;
@@ -44,6 +46,7 @@ export default class EventSetter implements IEventSetter {
     constructor(
         @inject('ILoggerModel') logger: ILoggerModel,
         @inject('IEPGUpdateEvent') epgUpdateEvent: IEPGUpdateEvent,
+        @inject('IOperatorEncodeEvent') encodeEvent: IOperatorEncodeEvent,
         @inject('IRuleEvent') ruleEvent: IRuleEvent,
         @inject('IReserveEvent') reserveEvent: IReserveEvent,
         @inject('IRecordingEvent') recordingEvent: IRecordingEvent,
@@ -62,6 +65,7 @@ export default class EventSetter implements IEventSetter {
     ) {
         this.log = logger.getLogger();
         this.epgUpdateEvent = epgUpdateEvent;
+        this.encodeEvent = encodeEvent;
         this.ruleEvent = ruleEvent;
         this.reserveEvent = reserveEvent;
         this.recordedEvent = recordedEvent;
@@ -117,7 +121,14 @@ export default class EventSetter implements IEventSetter {
         // ルール削除イベント
         this.ruleEvent.setDeleted(ruleId => {
             this.ipc.notifyClient();
-            this.reservationManage.updateRule(ruleId);
+            this.recordedManage.removeRuleId(ruleId).catch(err => {
+                this.log.system.error(`failed to remove ruleId from recorded. ruleId: ${ruleId}`);
+                this.log.system.error(err);
+            });
+            this.reservationManage.updateRule(ruleId).catch(err => {
+                this.log.system.error(`falied to update rule. ruleId: ${ruleId}`);
+                this.log.system.error(err);
+            });
         });
 
         // 予約情報更新イベント
@@ -163,17 +174,25 @@ export default class EventSetter implements IEventSetter {
         });
 
         // 録画失敗イベント
-        this.recordingEvent.setRecordingFailed((reserve, recorded) => {
+        this.recordingEvent.setRecordingFailed((_reserve, recorded) => {
             this.ipc.notifyClient();
-            this.reservationManage.cancel(reserve.id); // 予約から削除
-            this.externalCommandManage.addRecordingFailedCmd(recorded);
+            if (recorded !== null) {
+                this.externalCommandManage.addRecordingFailedCmd(recorded);
+            }
+        });
+
+        // 録画リトライオーバーイベント
+        this.recordingEvent.setRecordingRetryOver(reserve => {
+            // 予約から削除
+            this.reservationManage.cancel(reserve.id).catch(() => {});
         });
 
         // 録画完了
-        this.recordingEvent.setFinishRecording(async (reserve, recorded, isStopRec) => {
-            if (isStopRec === false) {
+        this.recordingEvent.setFinishRecording(async (reserve, recorded, isNeedDeleteReservation) => {
+            if (isNeedDeleteReservation === true) {
                 if (reserve.ruleId === null) {
-                    this.reservationManage.cancel(reserve.id); // 予約から削除
+                    // 予約から削除
+                    this.reservationManage.cancel(reserve.id).catch(() => {});
                 } else {
                     // 重複を更新するために予約更新
                     this.reservationManage.updateRule(reserve.ruleId).catch(() => {});
@@ -249,6 +268,11 @@ export default class EventSetter implements IEventSetter {
             this.ipc.notifyClient();
         });
 
+        // サムネイル削除
+        this.thumbnailEvent.setDeleted(() => {
+            this.ipc.notifyClient();
+        });
+
         // 録画削除
         this.recordedEvent.setDeleteRecorded(recorded => {
             this.ipc.notifyClient();
@@ -317,6 +341,11 @@ export default class EventSetter implements IEventSetter {
         this.recordedEvent.setChangeProtect(() => {
             this.ipc.notifyClient();
         });
+
+        // エンコード完了
+        this.encodeEvent.setFinishEncode(info => {
+            this.externalCommandManage.addEncodingFinishCmd(info);
+        });
     }
 
     /**
@@ -329,7 +358,7 @@ export default class EventSetter implements IEventSetter {
         let tags: apid.RecordedTagId[] = [];
         try {
             tags = JSON.parse(tagsStr);
-        } catch (err) {
+        } catch (err: any) {
             this.log.system.error(`reserve tags parese error: ${tagsStr}`);
             this.log.system.error(err);
 

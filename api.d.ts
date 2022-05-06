@@ -20,6 +20,7 @@ export type ProgramGenreLv2 = number;
 export type ProgramVideoType = 'mpeg2' | 'h.264' | 'h.265';
 export type ProgramVideoResolution = '240p' | '480i' | '480p' | '720p' | '1080i' | '2160p' | '4320p';
 export type ProgramAudioSamplingRate = 16000 | 22050 | 24000 | 32000 | 44100 | 48000;
+export type RawExtended = { [description: string]: string };
 export type StreamId = number;
 export type StreamType = 'LiveStream' | 'LiveHLS' | 'RecordedStream' | 'RecordedHLS';
 
@@ -129,6 +130,7 @@ export interface ReserveItem {
     name: string;
     description?: string;
     extended?: string;
+    rawExtended?: RawExtended;
     genre1?: ProgramGenreLv1;
     subGenre1?: ProgramGenreLv2;
     genre2?: ProgramGenreLv1;
@@ -356,6 +358,7 @@ export interface RecordedItem {
     name: string;
     description?: string;
     extended?: string;
+    rawExtended?: RawExtended;
     genre1?: ProgramGenreLv1;
     subGenre1?: ProgramGenreLv2;
     genre2?: ProgramGenreLv1;
@@ -522,6 +525,7 @@ export interface ScheduleOption {
     startAt: UnixtimeMS;
     endAt: UnixtimeMS;
     isHalfWidth: boolean;
+    needsRawExtended?: boolean;
     isFree?: boolean;
     GR: boolean;
     BS: boolean;
@@ -536,6 +540,7 @@ export interface ChannelScheduleOption {
     startAt: UnixtimeMS;
     days: number; // 取得日数
     isHalfWidth: boolean;
+    needsRawExtended?: boolean;
     isFree?: boolean;
     channelId: ChannelId;
 }
@@ -570,6 +575,7 @@ export interface ScheduleProgramItem {
     name: string;
     description?: string;
     extended?: string;
+    rawExtended?: RawExtended;
     genre1?: ProgramGenreLv1;
     subGenre1?: ProgramGenreLv2;
     genre2?: ProgramGenreLv1;
@@ -670,6 +676,7 @@ export interface LiveStreamInfoItem {
     endAt: UnixtimeMS;
     description?: string;
     extended?: string;
+    rawExtended?: RawExtended;
 }
 
 /**
@@ -739,4 +746,11 @@ export interface StorageItem extends DiskUsage {
  */
 export interface StorageInfo {
     items: StorageItem[];
+}
+
+/**
+ * バージョン情報
+ */
+export interface VersionInfo {
+    version: string;
 }

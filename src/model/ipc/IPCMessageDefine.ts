@@ -57,6 +57,7 @@ export enum ModelName {
     reserveation = 'reserveation',
     rule = 'rule',
     thumbnail = 'thumbnail',
+    encodeEvent = 'encodeEvent',
 }
 
 /**
@@ -126,4 +127,13 @@ export enum RuleFuntions {
 export enum ThumbnailFunctions {
     regenerate = 'regenerate',
     fileCleanup = 'fileCleanup',
+    add = 'add',
+    delete = 'delete',
+}
+
+/**
+ * encode event の関数定義
+ */
+export enum OperatorEncodeEventFunctions {
+    emitFinishEncode = 'emitFinishEncode',
 }

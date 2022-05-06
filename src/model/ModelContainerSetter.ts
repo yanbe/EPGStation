@@ -72,12 +72,14 @@ import EventSetter from './event/EventSetter';
 import IEncodeEvent from './event/IEncodeEvent';
 import IEPGUpdateEvent from './event/IEPGUpdateEvent';
 import IEventSetter from './event/IEventSetter';
+import IOperatorEncodeEvent from './event/IOperatorEncodeEvent';
 import IRecordedEvent from './event/IRecordedEvent';
 import IRecordedTagEvent from './event/IRecordedTagEvent';
 import IRecordingEvent from './event/IRecordingEvent';
 import IReserveEvent from './event/IReserveEvent';
 import IRuleEvent from './event/IRuleEvent';
 import IThumbnailEvent from './event/IThumbnailEvent';
+import OperatorEncodeEvent from './event/OperatorEncodeEvent';
 import RecordedEvent from './event/RecordedEvent';
 import RecordedTagEvent from './event/RecordedTagEvent';
 import RecordingEvent from './event/RecordingEvent';
@@ -126,12 +128,16 @@ import IThumbnailManageModel from './operator/thumbnail/IThumbnailManageModel';
 import ThumbnailManageModel from './operator/thumbnail/ThumbnailManageModel';
 import PromiseQueue from './PromiseQueue';
 import PromiseRetry from './PromiseRetry';
+import EncodeFileManageModel from './service/encode/EncodeFileManageModel';
 import EncodeFinishModel from './service/encode/EncodeFinishModel';
 import EncodeManageModel from './service/encode/EncodeManageModel';
 import EncodeProcessManageModel from './service/encode/EncodeProcessManageModel';
+import EncoderModel from './service/encode/EncoderModel';
+import IEncodeFileManageModel from './service/encode/IEncodeFileManageModel';
 import IEncodeFinishModel from './service/encode/IEncodeFinishModel';
 import IEncodeManageModel from './service/encode/IEncodeManageModel';
 import IEncodeProcessManageModel from './service/encode/IEncodeProcessManageModel';
+import { EncoderModelProvider, IEncoderModel } from './service/encode/IEncoderModel';
 import IServiceServer from './service/IServiceServer';
 import ServiceServer from './service/ServiceServer';
 import ISocketIOManageModel from './service/socketio/ISocketIOManageModel';
@@ -209,6 +215,8 @@ export const set = (container: Container): void => {
 
     container.bind<IEPGUpdateEvent>('IEPGUpdateEvent').to(EPGUpdateEvent).inSingletonScope();
 
+    container.bind<IOperatorEncodeEvent>('IOperatorEncodeEvent').to(OperatorEncodeEvent).inSingletonScope();
+
     container
         .bind<IEPGUpdateExecutorManageModel>('IEPGUpdateExecutorManageModel')
         .to(EPGUpdateExecutorManageModel)
@@ -241,7 +249,7 @@ export const set = (container: Container): void => {
                     try {
                         const recorderModel = context.container.get<IRecorderModel>('IRecorderModel');
                         resolve(recorderModel);
-                    } catch (err) {
+                    } catch (err: any) {
                         reject(err);
                     }
                 },
@@ -309,6 +317,25 @@ export const set = (container: Container): void => {
         .to(EncodeProcessManageModel)
         .inSingletonScope();
 
+    container.bind<IEncodeFileManageModel>('IEncodeFileManageModel').to(EncodeFileManageModel).inSingletonScope();
+
+    container.bind<IEncoderModel>('IEncoderModel').to(EncoderModel);
+
+    container.bind<EncoderModelProvider>('EncoderModelProvider').toProvider(context => {
+        return () => {
+            return new Promise<IEncoderModel>(
+                (resolve: (model: IEncoderModel) => void, reject: (err: Error) => void) => {
+                    try {
+                        const encoderModel = context.container.get<IEncoderModel>('IEncoderModel');
+                        resolve(encoderModel);
+                    } catch (err: any) {
+                        reject(err);
+                    }
+                },
+            );
+        };
+    });
+
     container.bind<IEncodeManageModel>('IEncodeManageModel').to(EncodeManageModel).inSingletonScope();
 
     container.bind<IEncodeFinishModel>('IEncodeFinishModel').to(EncodeFinishModel).inSingletonScope();
@@ -321,7 +348,7 @@ export const set = (container: Container): void => {
                 try {
                     const streamModel = context.container.get<ILiveStreamBaseModel>('LiveStreamModel');
                     resolve(streamModel);
-                } catch (err) {
+                } catch (err: any) {
                     reject(err);
                 }
             });
@@ -338,7 +365,7 @@ export const set = (container: Container): void => {
                 try {
                     const streamModel = context.container.get<ILiveStreamBaseModel>('LiveHLSStreamModel');
                     resolve(streamModel);
-                } catch (err) {
+                } catch (err: any) {
                     reject(err);
                 }
             });
@@ -353,7 +380,7 @@ export const set = (container: Container): void => {
                 try {
                     const streamModel = context.container.get<IRecordedStreamBaseModel>('RecordedStreamModel');
                     resolve(streamModel);
-                } catch (err) {
+                } catch (err: any) {
                     reject(err);
                 }
             });
@@ -367,7 +394,7 @@ export const set = (container: Container): void => {
                 try {
                     const streamModel = context.container.get<IRecordedStreamBaseModel>('RecordedHLSStreamModel');
                     resolve(streamModel);
-                } catch (err) {
+                } catch (err: any) {
                     reject(err);
                 }
             });

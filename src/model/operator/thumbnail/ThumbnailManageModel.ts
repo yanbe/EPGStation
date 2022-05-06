@@ -79,7 +79,7 @@ export default class ThumbnailManageModel implements IThumbnailManageModel {
         // check thumbnail dir
         try {
             await FileUtil.access(this.config.thumbnail, fs.constants.R_OK | fs.constants.W_OK);
-        } catch (err) {
+        } catch (err: any) {
             if (typeof err.code !== 'undefined' && err.code === 'ENOENT') {
                 // ディレクトリが存在しないので作成する
                 this.log.system.warn(`mkdirp: ${this.config.thumbnail}`);
@@ -133,7 +133,7 @@ export default class ThumbnailManageModel implements IThumbnailManageModel {
             thumbnail.recordedId = videoFile.recordedId;
             try {
                 await this.thumbnailDB.insertOnce(thumbnail);
-            } catch (err) {
+            } catch (err: any) {
                 this.log.system.error(`thumbnail add DB error: ${videoFileId}`);
                 this.log.system.error(err);
 
@@ -192,9 +192,40 @@ export default class ThumbnailManageModel implements IThumbnailManageModel {
             await FileUtil.stat(filePath);
 
             return this.getSaveFileName(recordedId, conflict + 1);
-        } catch (err) {
+        } catch (err: any) {
             return fileName;
         }
+    }
+
+    /**
+     * 指定したサムネイルを削除する
+     * @param thumbnailId: apid.ThumbnailId
+     * @return Promise<void>
+     */
+    public async delete(thumbnailId: apid.ThumbnailId): Promise<void> {
+        const thumbnail = await this.thumbnailDB.findId(thumbnailId);
+        if (thumbnail === null) {
+            throw new Error('ThumbnailIsNotFound');
+        }
+
+        this.log.system.info(`delete thumbnail ${thumbnailId}`);
+
+        // DB から削除
+        await this.thumbnailDB.deleteOnce(thumbnailId).catch(err => {
+            this.log.system.error(`delete thumbnail error: ${thumbnailId}`);
+            this.log.system.error(err);
+            throw err;
+        });
+
+        // サムネイルファイルを削除
+        const filePath = path.join(this.config.thumbnail, thumbnail.filePath);
+        await FileUtil.unlink(filePath).catch(err => {
+            this.log.system.error(`delete thumbnail error: ${thumbnailId}`);
+            this.log.system.error(err);
+            throw err;
+        });
+
+        this.thumbnailEvent.emitDeleted();
     }
 
     /**
@@ -240,7 +271,7 @@ export default class ThumbnailManageModel implements IThumbnailManageModel {
                     // ファイルが存在するので無視
                     existingThumbnailCnt++;
                     continue;
-                } catch (err) {
+                } catch (err: any) {
                     // ファイルが存在しない
                     nonExistingThumbnailIds.push(thumbnail.id);
                 }
@@ -317,7 +348,7 @@ export default class ThumbnailManageModel implements IThumbnailManageModel {
             await FileUtil.stat(filePath);
 
             return true;
-        } catch (err) {
+        } catch (err: any) {
             return false;
         }
     }

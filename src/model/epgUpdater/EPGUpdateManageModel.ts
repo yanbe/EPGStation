@@ -83,8 +83,13 @@ class EPGUpdateManageModel implements IEPGUpdateManageModel {
         });
         this.log.system.info('done get programs');
 
+        // メインの番組情報だけ取り出す
+        const insertPrograms = programs.filter(p => {
+            return this.isMainProgram(p);
+        });
+
         this.log.system.info('start update programs');
-        await this.programDB.insert(this.channelIndex, programs).catch(err => {
+        await this.programDB.insert(this.channelIndex, insertPrograms).catch(err => {
             this.log.system.error('update programs error');
             this.log.system.error(err);
             clearTimeout(timeout);
@@ -93,6 +98,41 @@ class EPGUpdateManageModel implements IEPGUpdateManageModel {
         this.log.system.info('done update programs');
 
         clearTimeout(timeout);
+    }
+
+    /**
+     * relatedItems からメインの番組情報か判定する
+     * @param program: mapid.Program
+     * @returns boolean true ならメインの番組
+     */
+    private isMainProgram(program: mapid.Program): boolean {
+        if (typeof program.relatedItems === 'undefined') {
+            return true;
+        }
+
+        for (const item of program.relatedItems) {
+            // Mirakurun 3.8 以下では type が存在しない && relatedItems が機能していないので true を返す
+            if (typeof item.type === 'undefined') {
+                return true;
+            }
+
+            // 移動したイベントか？
+            if (item.type === 'movement') {
+                return true;
+            }
+
+            // リレーの場合は無視
+            if (item.type === 'relay') {
+                continue;
+            }
+
+            // type が shared でメインの放送か？
+            if (item.eventId === program.eventId && item.serviceId === program.serviceId) {
+                return true;
+            }
+        }
+
+        return false;
     }
 
     /**
@@ -165,7 +205,7 @@ class EPGUpdateManageModel implements IEPGUpdateManageModel {
             // エラー処理
             eventStream.once('error', err => {
                 this.log.system.error('event stream error');
-                this.log.stream.error(err);
+                this.log.system.error(err);
                 this.stopStream(eventStream);
                 reject(err);
             });
@@ -215,7 +255,7 @@ class EPGUpdateManageModel implements IEPGUpdateManageModel {
                         }
                     }
                     this.log.system.debug('OK');
-                } catch (err) {
+                } catch (err: any) {
                     this.log.system.error('event stream parse error');
                     const tmpHex = tmp.toString('hex').match(/../g);
                     if (tmpHex !== null) {
@@ -276,23 +316,20 @@ class EPGUpdateManageModel implements IEPGUpdateManageModel {
         const updateIndex: { [programId: number]: mapid.Program } = {}; // 更新用索引
 
         for (const program of programs) {
-            switch (program.type) {
-                case 'create':
-                    const createData = (<CreateEvent>program).data;
-                    if (typeof createData.name !== 'undefined') {
-                        createIndex[createData.id] = createData;
-                    }
-                    break;
-                case 'update':
-                    const updateData = (<CreateEvent>program).data;
-                    if (typeof updateData !== 'undefined') {
-                        updateIndex[updateData.id] = updateData;
-                    }
-                    break;
-                case 'redefine':
-                    const from = (<RedefineEvent>program).data.from;
-                    deleteIndex[from] = from;
-                    break;
+            if (program.type === 'create') {
+                const createData = (<CreateEvent>program).data;
+                if (typeof createData.name !== 'undefined' && this.isMainProgram(createData) === true) {
+                    createIndex[createData.id] = createData;
+                }
+            } else if (program.type === 'update') {
+                const updateData = (<CreateEvent>program).data;
+                if (typeof updateData !== 'undefined' && this.isMainProgram(updateData) === true) {
+                    updateIndex[updateData.id] = updateData;
+                }
+            } else if (program.type === 'remove' || (program as any).type === 'redefine') {
+                // redefine は古いバージョンをサポートするため
+                const from = (<RedefineEvent>program).data.from;
+                deleteIndex[from] = from;
             }
         }
 
@@ -306,7 +343,7 @@ class EPGUpdateManageModel implements IEPGUpdateManageModel {
             updateValues: updateValues.length,
         });
 
-        this.log.stream.info('update db');
+        this.log.system.info('update db');
         await this.programDB.update(this.channelIndex, {
             insert: insertValues,
             update: updateValues,
@@ -334,6 +371,17 @@ class EPGUpdateManageModel implements IEPGUpdateManageModel {
             return;
         }
 
+        // ロゴデータ保持判定のために放送局情報をすべて取得する
+        const serviceDatas = await this.mirakurunClient.getServices().catch(err => {
+            this.log.system.error('get service error');
+            this.log.system.error(err);
+            return [] as mapid.Service[];
+        });
+        const serviceDataIndex: { [serviceId: number]: mapid.Service } = {};
+        for (const s of serviceDatas) {
+            serviceDataIndex[s.id] = s;
+        }
+
         const createIndex: { [serviceId: number]: mapid.Service } = {}; // 追加用索引
         const updateIndex: { [serviceId: number]: mapid.Service } = {}; // 更新用索引
 
@@ -347,6 +395,11 @@ class EPGUpdateManageModel implements IEPGUpdateManageModel {
                 // 除外索引に含まれる放送局を削除
                 continue;
             }
+
+            // add hasLogoData
+            if (typeof serviceDataIndex[service.data.id] !== 'undefined') {
+                service.data.hasLogoData = serviceDataIndex[service.data.id].hasLogoData;
+            }
             switch (service.type) {
                 case 'create':
                     if (typeof service.data.name !== 'undefined') {
@@ -358,9 +411,9 @@ class EPGUpdateManageModel implements IEPGUpdateManageModel {
                         updateIndex[service.data.id] = service.data;
                     }
                     break;
-                case 'redefine':
-                    // redefine は存在しない
-                    throw new Error('ServiceRedefine');
+                case 'remove':
+                    // TODO 要確認
+                    // throw new Error('ServiceRedefine');
                     break;
             }
         }
@@ -373,7 +426,7 @@ class EPGUpdateManageModel implements IEPGUpdateManageModel {
             updateValues: updateValues.length,
         });
 
-        this.log.stream.info('update db');
+        this.log.system.info('update db');
         await this.channelDB.update({
             insert: insertValues,
             update: updateValues,

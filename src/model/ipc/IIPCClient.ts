@@ -1,4 +1,5 @@
 import * as apid from '../../../api';
+import { OperatorFinishEncodeInfo } from '../event/IOperatorEncodeEvent';
 import { AddVideoFileOption, UploadedVideoFileOption } from '../operator/recorded/IRecordedManageModel';
 
 export interface IPCReservationManageModel {
@@ -50,6 +51,12 @@ export interface IPCRuleManageModel {
 export interface IPCThumbnailManageModel {
     regenerate(): Promise<void>;
     fileCleanup(): Promise<void>;
+    add(videoFileId: apid.VideoFileId): Promise<void>;
+    delete(thumbnailId: apid.ThumbnailId): Promise<void>;
+}
+
+export interface IPCOperatorEncodeEvent {
+    emitFinishEncode(info: OperatorFinishEncodeInfo): Promise<void>;
 }
 
 export default interface IIPCClient {
@@ -59,4 +66,5 @@ export default interface IIPCClient {
     recording: IPCRecordingManageModel;
     rule: IPCRuleManageModel;
     thumbnail: IPCThumbnailManageModel;
+    encodeEvent: IPCOperatorEncodeEvent;
 }

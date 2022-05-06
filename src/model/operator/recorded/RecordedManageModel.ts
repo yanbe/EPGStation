@@ -87,6 +87,9 @@ export default class RecordedManageModel implements IRecordedManageModel {
             recorded.reserveId !== null &&
             this.recordingManageModel.hasReserve(recorded.reserveId) === true
         ) {
+            this.log.system.info(
+                `cancel recording by recorded manager reserveId: ${recorded} recordedId: ${recorded.id}`,
+            );
             await this.recordingManageModel.cancel(recorded.reserveId, true);
         }
 
@@ -114,7 +117,7 @@ export default class RecordedManageModel implements IRecordedManageModel {
                     if (filePath === null) {
                         throw new Error('GetVideoFilePathError');
                     }
-                } catch (err) {
+                } catch (err: any) {
                     this.log.system.error(`get video file path error: ${v.id}`);
                     this.log.system.error(err);
                     this.log.system.error(v);
@@ -280,7 +283,7 @@ export default class RecordedManageModel implements IRecordedManageModel {
             // check dir
             try {
                 await FileUtil.stat(dirPath);
-            } catch (err) {
+            } catch (err: any) {
                 // mkdirp directory
                 this.log.system.info(`mkdirp: ${dirPath}`);
                 await mkdirp(dirPath);
@@ -294,11 +297,11 @@ export default class RecordedManageModel implements IRecordedManageModel {
         try {
             this.log.system.info(`move file ${option.filePath} -> ${filePath}`);
             await FileUtil.rename(option.filePath, filePath);
-        } catch (err) {
+        } catch (err: any) {
             // move を試す
             try {
                 await FileUtil.move(option.filePath, filePath);
-            } catch (e) {
+            } catch (e: any) {
                 this.log.system.error('move file error');
                 this.log.system.error(e);
                 await FileUtil.unlink(option.filePath).catch(() => {});
@@ -322,7 +325,7 @@ export default class RecordedManageModel implements IRecordedManageModel {
             // 通知
             const needsCreateThumbnail = typeof recorded.thumbnails === 'undefined' || recorded.thumbnails.length === 0;
             this.recordedEvent.emitAddUploadedVideoFile(videoFileId, needsCreateThumbnail);
-        } catch (err) {
+        } catch (err: any) {
             await FileUtil.unlink(filePath).catch(() => {});
             throw err;
         }
@@ -347,7 +350,7 @@ export default class RecordedManageModel implements IRecordedManageModel {
             await FileUtil.stat(filePath);
 
             return this.getUploadedVideoFilePath(dir, fileName, conflict + 1);
-        } catch (err) {
+        } catch (err: any) {
             return filePath;
         }
     }
@@ -562,7 +565,7 @@ export default class RecordedManageModel implements IRecordedManageModel {
                 } else {
                     this.log.system.warn(`directory is not empty: ${dir}`);
                 }
-            } catch (err) {
+            } catch (err: any) {
                 this.log.system.error(`failed to delete directory: ${dir}`);
                 this.log.system.error(err);
             }
@@ -592,7 +595,7 @@ export default class RecordedManageModel implements IRecordedManageModel {
                 try {
                     await this.recordedDB.removeDropLogFileId(dropLog.id);
                     await this.dropLogFileDB.deleteOnce(dropLog.id);
-                } catch (err) {
+                } catch (err: any) {
                     this.log.system.error(err);
                 }
             }
@@ -625,8 +628,16 @@ export default class RecordedManageModel implements IRecordedManageModel {
             await FileUtil.stat(filePath);
 
             return true;
-        } catch (err) {
+        } catch (err: any) {
             return false;
         }
+    }
+
+    /**
+     * 指定された ruleId を録画情報から削除する
+     * @param ruleId: apid.Rule
+     */
+    public async removeRuleId(ruleId: apid.RuleId): Promise<void> {
+        await this.recordedDB.removeRuleId(ruleId);
     }
 }

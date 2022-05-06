@@ -55,7 +55,7 @@ class EPGUpdater implements IEPGUpdater {
                 }
 
                 this.notify();
-            } catch (err) {
+            } catch (err: any) {
                 this.log.system.error('EPG update error');
                 this.log.system.error(err);
             }
@@ -63,7 +63,7 @@ class EPGUpdater implements IEPGUpdater {
             // 古い番組情報を削除
             this.log.system.info('delete old programs');
             await this.updateManage.deleteOldPrograms().catch(err => {
-                this.log.system.error('delete orld programs error');
+                this.log.system.error('delete old programs error');
                 this.log.system.error(err);
             });
         }, updateTime * 60 * 1000);
@@ -77,8 +77,8 @@ class EPGUpdater implements IEPGUpdater {
         this.isEventStreamAlive = true;
         try {
             await this.updateManage.start();
-        } catch (err) {
-            this.log.system.error('destory event stream');
+        } catch (err: any) {
+            this.log.system.error('destroy event stream');
             this.isEventStreamAlive = false;
         }
     }
