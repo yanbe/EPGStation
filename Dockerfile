@@ -21,7 +21,7 @@ RUN apt-get install -y --no-install-recommends build-essential yasm cmake libtoo
     make install
 
 RUN apt-get install -y --no-install-recommends curl && \
-    curl -fsSL https://deb.nodesource.com/setup_16.x | bash - && \
+    curl -fsSL https://deb.nodesource.com/setup_14.x | bash - && \
     apt-get install -y --no-install-recommends nodejs
 
 WORKDIR /app/client
