@@ -17,7 +17,7 @@ RUN git clone https://github.com/nkoriyama/aribb24.git && \
 RUN apt-get install -y --no-install-recommends build-essential yasm cmake libtool libc6 libc6-dev unzip wget libnuma1 libnuma-dev && \
     git clone https://git.ffmpeg.org/ffmpeg.git ffmpeg/ && \
     cd ffmpeg && \
-    ./configure --enable-cuda-nvcc --enable-cuvid --enable-nvenc --enable-nonfree --enable-libnpp --enable-version3 --enable-gpl --enable-libaribb24 --enable-libass --extra-cflags=-I/usr/local/cuda/include --extra-ldflags=-L/usr/local/cuda/lib64 --disable-static --enable-shared && \
+    ./configure --enable-cuda-nvcc --enable-cuvid --enable-nvenc --enable-nonfree --enable-libnpp --enable-version3 --enable-gpl --enable-libaribb24 --enable-libass --extra-cflags=-I/usr/local/cuda/include --extra-ldflags=-L/usr/local/cuda/lib64 && \
     make install
 
 RUN apt-get install -y --no-install-recommends curl && \
