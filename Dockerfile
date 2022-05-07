@@ -17,11 +17,11 @@ RUN git clone https://github.com/nkoriyama/aribb24.git && \
 RUN apt-get install -y --no-install-recommends build-essential yasm cmake libtool libc6 libc6-dev unzip wget libnuma1 libnuma-dev && \
     git clone https://git.ffmpeg.org/ffmpeg.git ffmpeg/ && \
     cd ffmpeg && \
-    ./configure --enable-cuda-nvcc --enable-cuvid --enable-nvenc --enable-nonfree --enable-libnpp --enable-version3 --enable-gpl --enable-libaribb24 --enable-libass --extra-cflags=-I/usr/local/cuda/include --extra-ldflags=-L/usr/local/cuda/lib64 && \
+    ./configure --enable-cuda-nvcc --enable-cuvid --enable-nvenc --enable-nonfree --enable-libnpp --enable-version3 --enable-gpl --enable-libaribb24 --enable-libass --extra-cflags=-I/usr/local/cuda/include --extra-ldflags=-L/usr/local/cuda/lib64 --disable-static --enable-shared && \
     make install
 
 RUN apt-get install -y --no-install-recommends curl && \
-    curl -fsSL https://deb.nodesource.com/setup_14.x | bash - && \
+    curl -fsSL https://deb.nodesource.com/setup_16.x | bash - && \
     apt-get install -y --no-install-recommends nodejs
 
 WORKDIR /app/client
