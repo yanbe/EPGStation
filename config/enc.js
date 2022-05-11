@@ -16,7 +16,7 @@ const preset = 'hq';
 const decoder = 'mpeg2_cuvid';
 const encoder = 'h264_nvenc';
 
-const args = ['-y', '-analyzeduration', analyzedurationSize, '-probesize', probesizeSize, '-fix_sub_duration'];
+const args = ['-y', '-analyzeduration', analyzedurationSize, '-probesize', probesizeSize];
 
 // dual mono 設定
 if (isDualMono) {
@@ -37,9 +37,6 @@ Array.prototype.push.apply(args,['-movflags', 'faststart']);
 
 // 字幕データを含めたストリームをすべてマップ
 // Array.prototype.push.apply(args, ['-map', '0', '-ignore_unknown', '-max_muxing_queue_size', maxMuxingQueueSize, '-sn']);
-
-// 字幕をデフォルトでONにする
-Array.prototype.push.apply(args,['-default_mode', 'infer']);
 
 // 映像ビットレート
 let videoBitrate;
@@ -75,13 +72,19 @@ Array.prototype.push.apply(args,[
     '-b_ref_mode', 'middle',
     '-i_qfactor', '0.75',
     '-b_qfactor', '1.1',
-    '-f', 'matroska',
+    '-f', 'mp4',
     '-c:a', 'aac',
     '-ar', '48000',
     '-ab', audioBitrate,
     '-ac', '2',
     output
 ]);
+
+let str = '';
+for (let i of args) {
+    str += ` ${ i }`
+}
+console.error(str);
 
 const getDuration = filePath => {
     return new Promise((resolve, reject) => {

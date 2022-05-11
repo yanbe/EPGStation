@@ -11,7 +11,8 @@ data/streamfiles/*
 config/*
 !config/*.template
 !config/*.sample.yml
-data/*.json
+!config/enc.js
+!config/mkv.js
 data/upload/*
 drop/*.log
 node_modules
