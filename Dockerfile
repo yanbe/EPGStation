@@ -57,16 +57,17 @@ RUN apt-get install -y --no-install-recommends build-essential yasm cmake libtoo
         --enable-version3 \
         --enable-gpl \
         --enable-libaribb24 \
-        --enable-decoder=libaribb24 \
-        --enable-decoder=aac \
         --enable-libass \
+        --enable-protocol=file \
         --enable-demuxer=mpegts \
         --enable-demuxer=mp4 \
         --enable-demuxer=matroska \
+        --enable-decoder=aac \
+        --enable-decoder=libaribb24 \
         --enable-filter=ass \
         --enable-filter=yadif_cuda \
         --enable-encoder=aac \
-        --enable-mu xer=hls \
+        --enable-muxer=hls \
         --enable-muxer=mp4 \
         --enable-muxer=matroska \
         --extra-cflags=-I/usr/local/cuda/include \
