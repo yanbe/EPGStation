@@ -73,7 +73,7 @@ Array.prototype.push.apply(args,[
     '-i_qfactor', '0.75',
     '-b_qfactor', '1.1',
     '-f', 'mp4',
-    '-c:a', 'aac',
+    '-c:a', 'libfdk_aac',
     '-ar', '48000',
     '-ab', audioBitrate,
     '-ac', '2',
